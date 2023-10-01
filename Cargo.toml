@@ -1,0 +1,30 @@
+[package]
+name = "primitypes"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+bit-vec = { version = "0.6.3", features = ["serde"] }
+rand = "0.8.5"
+serde = { version = "1.0.186", features = ["derive"] }
+serde_json = "1.0.105"
+ts-rs = "7.0.0"
+uuid = { version = "1.4.1", features = ["v4", "serde"] }
+openssl = { version = "0.10.35", features = ["vendored"] }
+serde_repr = "0.1.16"
+lazy_static = "1.4.0"
+bitvec = { version = "1.0.1", features = ["serde"] }
+
+[dependencies.sqlx]
+version = "0.6.2"
+default-features = false
+features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate", "offline", "decimal", "json", "bit-vec"]
+
+
+[lib]
+name="primitypes"
+path="src/lib.rs"
+crate-type=["rlib"]
