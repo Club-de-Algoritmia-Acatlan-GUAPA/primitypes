@@ -1,8 +1,8 @@
-use crate::problem::{ContestId, ProblemID, SubmissionID};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use uuid::Uuid;
 
+use crate::problem::{ContestId, ProblemID, SubmissionID};
 
 #[derive(Clone, Debug, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]

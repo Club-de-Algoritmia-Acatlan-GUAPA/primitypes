@@ -1,20 +1,24 @@
-use crate::consts::{
-    CONTEST_ID_BITS, EMPTY_BITS, PROBLEM_ID_BITS, SUBMISSION_ID_BITS, TIMESTAMP_BITS,
-    UUID_TIME_MID_BITS,
-};
-use crate::serde::external_struct;
-use crate::status::Status;
+use std::process::Output;
+
 use anyhow::{anyhow, Result};
 use bit_vec::BitVec;
 use serde::{Deserialize, Serialize};
-use std::process::Output;
 use ts_rs::TS;
 use uuid::Uuid;
+
+use crate::{
+    consts::{
+        CONTEST_ID_BITS, EMPTY_BITS, PROBLEM_ID_BITS, SUBMISSION_ID_BITS, TIMESTAMP_BITS,
+        UUID_TIME_MID_BITS,
+    },
+    serde::external_struct,
+    status::Status,
+};
 /// # Id concurso (20 bits):
 ///
 ///    Se auto serializa en la base de datos de uno en uno,se guarda en 20 bits
-///    es decir podemos tener un maximo de 2^20 concursos con 32 problemas cada uno.
-///
+///    es decir podemos tener un maximo de 2^20 concursos con 32 problemas cada
+/// uno.
 #[derive(TS)]
 #[ts(export)]
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]
@@ -60,15 +64,19 @@ impl ProblemID {
         base |= id;
         Self(base)
     }
+
     pub fn as_u32(&self) -> u32 {
         self.0
     }
+
     pub fn is_contest_problem(value: &u32) -> bool {
         (value >> (PROBLEM_ID_BITS - 1)) & 1 == 1
     }
+
     pub fn is_individual_problem(value: &u32) -> bool {
         !ProblemID::is_contest_problem(value)
     }
+
     pub fn as_submission_id_bit_vec(&self) -> BitVec {
         let mask_of_ones: u128 = (1 << PROBLEM_ID_BITS) - 1;
         let mask_of_shifted_bits: u128 = mask_of_ones << (UUID_TIME_MID_BITS + EMPTY_BITS);
@@ -89,10 +97,10 @@ impl ProblemID {
 ///        - la hora desde unix_epoch en milisegundos, se guarda en 41 bits
 ///        - el id_concurso -> 20 bits
 ///        - el id_problema  -> 29 bits
-///        - el [time_mid del uuid](https://es.wikipedia.org/wiki/Identificador_%C3%BAnico_universal#:~:text=Un%20n%C3%BAmero%20entero%20de%2016%20bits%20(4%20d%C3%ADgitos%20hexadecimales)%20%22time_mid%22%20con%20los%2016%20bits%20centrales%20del%20timestamp.) del usuario consta de 16 bits -> 16 bits
+///        - el [time_mid del uuid](https://es.wikipedia.org/wiki/Identificador_%C3%BAnico_universal#:~:text=Un%20n%C3%BAmero%20entero%20de%2016%20bits%20(4%20d%C3%ADgitos%20hexadecimales)%20%22time_mid%22%20con%20los%2016%20bits%20centrales%20del%20timestamp.)
+///          del usuario consta de 16 bits -> 16 bits
 ///
 ///    Total 100 bits
-///
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, TS)]
 #[ts(export)]
@@ -105,6 +113,7 @@ impl SubmissionID {
         bv.or(&base_vec);
         Self(base, bv)
     }
+
     pub fn from_bitvec(bitvec: BitVec) -> Result<Self> {
         let bytes: [u8; 16] = bitvec
             .to_bytes()
@@ -114,6 +123,7 @@ impl SubmissionID {
 
         Ok(Self(base, bitvec))
     }
+
     pub fn new(
         current_time: u64,
         problem_id: &ProblemID,
@@ -142,9 +152,11 @@ impl SubmissionID {
         bv.or(&base_vec);
         Self(base, bv)
     }
+
     pub fn as_u128(&self) -> u128 {
         self.0
     }
+
     pub fn get_contest_id(&self) -> Result<ContestId> {
         let mask_of_ones = (1 << CONTEST_ID_BITS) - 1;
         let mask_of_shifted_bits = self.0 >> (PROBLEM_ID_BITS + UUID_TIME_MID_BITS + EMPTY_BITS);
@@ -167,6 +179,7 @@ impl SubmissionID {
         let mask_of_shifted_bits = self.0 >> (UUID_TIME_MID_BITS + EMPTY_BITS);
         Ok(ProblemID((mask_of_ones & mask_of_shifted_bits).try_into()?))
     }
+
     pub fn get_problem_id_as_bit_vec(&self) -> BitVec {
         let mask_of_ones: u128 = (1 << PROBLEM_ID_BITS) - 1;
         let mask_of_shifted_bits: u128 = mask_of_ones << (UUID_TIME_MID_BITS + EMPTY_BITS);
@@ -288,10 +301,14 @@ pub struct ProblemExecutorResult {
 }
 #[cfg(test)]
 mod tests {
-    use crate::consts::{CONTEST_ID_BITS, PROBLEM_ID_BITS};
-    use crate::problem::{ContestId, ProblemID, SubmissionID};
-    use rand::Rng;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    use rand::Rng;
+
+    use crate::{
+        consts::{CONTEST_ID_BITS, PROBLEM_ID_BITS},
+        problem::{ContestId, ProblemID, SubmissionID},
+    };
 
     #[test]
     fn submission_id_is_being_generated_correctly() {

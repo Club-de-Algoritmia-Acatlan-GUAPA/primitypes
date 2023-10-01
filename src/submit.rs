@@ -1,11 +1,8 @@
-use crate::contest::Language;
-use crate::problem::ProblemID;
-use crate::status::StatusPG;
 use bit_vec::BitVec;
-use serde::de::IntoDeserializer;
-use serde::{Deserialize, Serialize};
-
+use serde::{de::IntoDeserializer, Deserialize, Serialize};
 use ts_rs::TS;
+
+use crate::{contest::Language, problem::ProblemID, status::StatusPG};
 
 #[derive(Deserialize, Serialize, Debug, TS)]
 #[serde(rename_all = "lowercase")]

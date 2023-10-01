@@ -1,9 +1,10 @@
-use crate::back_to_enum;
+use std::{collections::HashMap, fmt};
+
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
 use ts_rs::TS;
+
+use crate::back_to_enum;
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Deserialize, Serialize, TS)]
 #[ts(export)]
 pub enum Status {
@@ -18,7 +19,7 @@ pub enum Status {
     UnknownError(String),
 }
 
-#[derive(Debug,Default, Clone, Hash, PartialEq, Eq, Deserialize, Serialize, TS, sqlx::Type)]
+#[derive(Debug, Default, Clone, Hash, PartialEq, Eq, Deserialize, Serialize, TS, sqlx::Type)]
 #[ts(export)]
 #[sqlx(type_name = "submission_status", rename_all = "snake_case")]
 pub enum StatusPG {

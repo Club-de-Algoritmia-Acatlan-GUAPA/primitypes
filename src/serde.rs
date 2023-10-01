@@ -1,7 +1,9 @@
+use std::{
+    os::unix::process::ExitStatusExt,
+    process::{ExitStatus, Output},
+};
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::os::unix::process::ExitStatusExt;
-use std::process::ExitStatus;
-use std::process::Output;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(remote = "Output")]
@@ -35,16 +37,18 @@ where
         Some(code) => ExitStatus::from_raw(code),
         None => {
             return Err(serde::de::Error::custom("Exit code is missing"));
-        }
+        },
     };
 
     Ok(exit_status)
 }
 
 pub mod external_struct {
-    use super::RemoteOutput;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use std::process::Output;
+
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    use super::RemoteOutput;
 
     pub fn serialize<S>(value: &Option<Output>, serializer: S) -> Result<S::Ok, S::Error>
     where
