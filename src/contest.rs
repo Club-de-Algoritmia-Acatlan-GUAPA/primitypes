@@ -22,6 +22,6 @@ pub struct Submission {
     pub user_id: Uuid,
     pub contest_id: Option<ContestId>,
     pub language: Language,
-    pub code: String,
+    pub code: Vec<u8>,
     pub id: SubmissionID,
 }
