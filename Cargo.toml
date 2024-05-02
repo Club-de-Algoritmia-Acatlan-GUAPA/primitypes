@@ -6,22 +6,25 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.79"
 bit-vec = { version = "0.6.3", features = ["serde"] }
 rand = "0.8.5"
-serde = { version = "1.0.186", features = ["derive"] }
-serde_json = "1.0.105"
-ts-rs = "7.0.0"
-uuid = { version = "1.4.1", features = ["v4", "serde"] }
-openssl = { version = "0.10.35", features = ["vendored"] }
-serde_repr = "0.1.16"
+serde = { version = "1.0.195", features = ["derive"] }
+serde_json = "1.0.111"
+ts-rs = { version = "7.1.1", features = ["chrono-impl", "uuid-impl"] }
+uuid = { version = "1.6.1", features = ["v4", "serde"] }
+openssl = { version = "0.10.62", features = ["vendored"] }
+serde_repr = "0.1.18"
 lazy_static = "1.4.0"
 bitvec = { version = "1.0.1", features = ["serde"] }
+validator = { version = "0.16.1", features = ["derive"] }
+chrono = "0.4.34"
+serde_bytes = "0.11.14"
 
 [dependencies.sqlx]
-version = "0.6.2"
+version = "0.7.3"
 default-features = false
-features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate", "offline", "decimal", "json", "bit-vec"]
+features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate", "rust_decimal", "json", "bit-vec"]
 
 
 [lib]

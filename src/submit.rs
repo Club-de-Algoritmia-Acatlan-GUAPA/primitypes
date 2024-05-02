@@ -1,8 +1,16 @@
 use bit_vec::BitVec;
-use serde::{de::IntoDeserializer, Deserialize, Serialize};
+use serde::{
+    de::{self},
+    Deserialize, Deserializer, Serialize,
+};
 use ts_rs::TS;
 
-use crate::{contest::Language, problem::ProblemID, status::StatusPG};
+use crate::{
+    contest::Language,
+    problem::{ProblemID, SubmissionId},
+    status::StatusPG,
+    utils::empty_string_as_none,
+};
 
 #[derive(Deserialize, Serialize, Debug, TS)]
 #[serde(rename_all = "lowercase")]
@@ -22,6 +30,23 @@ pub struct GetSubmissionsForm {
     pub problem_id: ProblemID,
     pub from: usize,
     pub to: usize,
+}
+
+#[derive(Deserialize, Serialize, Debug, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(export)]
+pub struct GetSubmissionId {
+    #[serde(deserialize_with = "string_into_submission_id")]
+    pub submission_id: SubmissionId,
+}
+
+fn string_into_submission_id<'de, D>(de: D) -> Result<SubmissionId, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt = String::deserialize(de)?;
+    let submission_id = SubmissionId::from_string(&opt).map_err(de::Error::custom)?;
+    Ok(submission_id)
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -44,19 +69,6 @@ pub struct GetSubmissionsJson {
     pub submitted_at: u64,
 }
 
-//https://github.com/serde-rs/serde/issues/1425#issuecomment-462282398`
-pub fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-    T: serde::Deserialize<'de>,
-{
-    let opt = Option::<String>::deserialize(de)?;
-    let opt = opt.as_deref();
-    match opt {
-        None | Some("") => Ok(None),
-        Some(s) => T::deserialize(s.into_deserializer()).map(Some),
-    }
-}
 #[derive(Deserialize, Serialize, Debug, TS)]
 #[ts(export)]
 pub struct SubmitResponse {

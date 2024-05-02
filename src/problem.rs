@@ -1,10 +1,12 @@
-use std::process::Output;
+use std::{fmt, process::Output};
 
 use anyhow::{anyhow, Result};
 use bit_vec::BitVec;
 use serde::{Deserialize, Serialize};
+use sqlx::types::chrono::Utc;
 use ts_rs::TS;
 use uuid::Uuid;
+use validator::Validate;
 
 use crate::{
     consts::{
@@ -13,11 +15,12 @@ use crate::{
     },
     serde::external_struct,
     status::Status,
+    utils::empty_string_as_none,
 };
-/// # Id concurso (20 bits):
+/// # Id concurso (32 bits):
 ///
 ///    Se auto serializa en la base de datos de uno en uno,se guarda en 20 bits
-///    es decir podemos tener un maximo de 2^20 concursos con 32 problemas cada
+///    es decir podemos tener un maximo de 2^32 concursos
 /// uno.
 #[derive(TS)]
 #[ts(export)]
@@ -48,6 +51,12 @@ impl From<&ProblemID> for u128 {
         value.0 as u128
     }
 }
+impl fmt::Display for ProblemID {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(TS)]
 #[ts(export)]
 pub enum ProblemType {
@@ -56,34 +65,31 @@ pub enum ProblemType {
 }
 
 impl ProblemID {
-    pub fn new(problem_type: ProblemType, id: u32) -> Self {
-        let mut base = match problem_type {
-            ProblemType::Individual => 0,
-            ProblemType::Contest => 1 << (PROBLEM_ID_BITS - 1),
-        };
-        base |= id;
-        Self(base)
+    pub fn new(id: u32) -> Self {
+        //let mut base = match problem_type {
+        //    ProblemType::Individual => 0,
+        //    ProblemType::Contest => 1 << (PROBLEM_ID_BITS - 1),
+        //};
+        //base |= id;
+        Self(id)
     }
 
     pub fn as_u32(&self) -> u32 {
         self.0
     }
 
-    pub fn is_contest_problem(value: &u32) -> bool {
-        (value >> (PROBLEM_ID_BITS - 1)) & 1 == 1
-    }
+    //pub fn is_contest_problem(value: &u32) -> bool {
+    //    (value >> (PROBLEM_ID_BITS - 1)) & 1 == 1
+    //}
 
-    pub fn is_individual_problem(value: &u32) -> bool {
-        !ProblemID::is_contest_problem(value)
-    }
+    //pub fn is_individual_problem(value: &u32) -> bool {
+    //    !ProblemID::is_contest_problem(value)
+    //}
 
     pub fn as_submission_id_bit_vec(&self) -> BitVec {
         let mask_of_ones: u128 = (1 << PROBLEM_ID_BITS) - 1;
         let mask_of_shifted_bits: u128 = mask_of_ones << (UUID_TIME_MID_BITS + EMPTY_BITS);
         let shifted_problem_id: u128 = (self.0 as u128) << (UUID_TIME_MID_BITS + EMPTY_BITS);
-        println!("{:b}", mask_of_ones);
-        println!("{:b}", mask_of_shifted_bits);
-        println!("{:b}", shifted_problem_id);
         let problem_id =
             BitVec::from_bytes(&(shifted_problem_id & mask_of_shifted_bits).to_be_bytes());
         let mut base = BitVec::from_elem(128, false);
@@ -95,18 +101,18 @@ impl ProblemID {
 ///
 ///    Se compone de concatenar :
 ///        - la hora desde unix_epoch en milisegundos, se guarda en 41 bits
-///        - el id_concurso -> 20 bits
-///        - el id_problema  -> 29 bits
+///        - el id_concurso -> 32 bits
+///        - el id_problema  -> 32 bits
 ///        - el [time_mid del uuid](https://es.wikipedia.org/wiki/Identificador_%C3%BAnico_universal#:~:text=Un%20n%C3%BAmero%20entero%20de%2016%20bits%20(4%20d%C3%ADgitos%20hexadecimales)%20%22time_mid%22%20con%20los%2016%20bits%20centrales%20del%20timestamp.)
 ///          del usuario consta de 16 bits -> 16 bits
 ///
 ///    Total 100 bits
 
-#[derive(Default, Serialize, Deserialize, Debug, Clone, TS)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, TS, Eq, PartialEq)]
 #[ts(export)]
-pub struct SubmissionID(u128, #[serde(skip)] BitVec);
+pub struct SubmissionId(u128, #[serde(skip)] BitVec);
 
-impl SubmissionID {
+impl SubmissionId {
     pub fn from_u128(base: u128) -> Self {
         let mut bv = BitVec::from_elem(128, false);
         let base_vec = BitVec::from_bytes(&base.to_be_bytes());
@@ -122,6 +128,11 @@ impl SubmissionID {
         let base = u128::from_be_bytes(bytes);
 
         Ok(Self(base, bitvec))
+    }
+
+    pub fn from_string(string: &str) -> Result<Self> {
+        let num: u128 = string.parse::<u128>()?;
+        Ok(Self::from_u128(num))
     }
 
     pub fn new(
@@ -201,17 +212,11 @@ impl SubmissionID {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct ProblemBodyMetadata {
-    time_limit: usize,
-    memory_limit: usize,
-}
-
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Default, Serialize, Clone, Deserialize, TS)]
 #[ts(export)]
 pub struct ProblemBody {
-    pub metadata: ProblemBodyMetadata,
+    pub information: String,
+    #[serde(deserialize_with = "empty_string_as_none")]
     pub identifier: Option<String>,
     pub name: String,
     pub input: String,
@@ -220,74 +225,90 @@ pub struct ProblemBody {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Clone, TS)]
+#[derive(Debug, Clone, TS, Validate, Default)]
 #[ts(export)]
 pub struct Problem {
-    pub problem_id: ProblemID,
-    pub name: Option<String>,
-    pub policy_execution: PolicyExecution,
-    // todo default implementation for system policy
-    pub system_policy: Option<SystemPolicy>,
-    pub test_cases: Vec<TestCase>,
+    pub id: ProblemID,
+    pub created_at: chrono::DateTime<Utc>,
+    pub submitted_by: Uuid,
+    pub body: ProblemBody,
     pub checker: Option<Checker>,
-    pub validation_type: ValidatorType,
+    pub validation: ValidationType,
+    #[validate(range(min = 256, max = 512))] // memory in mb
+    pub memory_limit: u16,
+    #[validate(range(min = 1, max = 10))] // time limit in seconds
+    pub time_limit: u16,
+    pub is_public: bool,
+    pub test_cases: Vec<Uuid>,
 }
+
 #[derive(Deserialize, Serialize, Debug, TS)]
 #[ts(export)]
 pub struct ProblemGetResponse {
     pub problem_id: u32,
     pub body: ProblemBody,
 }
+
+#[derive(Debug, Validate, Deserialize, TS)]
+#[ts(export)]
+pub struct ProblemForm {
+    pub body: ProblemBody,
+    #[serde(deserialize_with = "empty_string_as_none")]
+    pub checker: Option<String>,
+    pub validation: ValidationType,
+    #[validate(range(min = 256, max = 512))] // memory in mb
+    pub memory_limit: u16,
+    #[validate(range(min = 1, max = 10))] // time limit in seconds
+    pub time_limit: u16,
+    pub is_public: bool,
+}
+
 #[derive(Debug, Clone, TS)]
 #[ts(export)]
 pub struct Checker {
     pub checker: String,
 }
 
-#[derive(Debug, Clone, TS)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, TS)]
 #[ts(export)]
-pub enum PolicyExecution {
-    Checker,
-    Interactive,
-    AnswerFile,
+pub struct TestCaseInfo {
+    pub stdin_path: String,
+    pub stdout_path: Option<String>,
+    pub problem_id: ProblemID,
+    pub id: Uuid,
 }
 
-#[derive(Debug, Clone, Default, TS)]
-#[ts(export)]
-pub struct TestCase {
-    pub input_case: String,
-    pub output_case: String,
-    pub id: i32,
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default, TS)]
+pub struct TestCaseConfig {
+    pub test_cases: Vec<TestCaseInfo>,
 }
 
+// this for testing purposes
 pub struct STestCase {
     pub input_case: String,
     pub output_case: String,
-    pub id: i32,
+    pub id: Uuid,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TS)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize, TS)]
 #[ts(export)]
 pub struct TestCaseResult {
     pub status: Status,
-    pub id: i32,
+    pub id: Uuid,
     #[serde(with = "external_struct")]
     #[ts(type = "{ stdout: any , stderr : any , status: any } | null")]
     pub output: Option<Output>,
 }
 
-#[derive(Debug, Clone, Default, TS)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, TS, sqlx::Type)]
 #[ts(export)]
-pub struct SystemPolicy {
-    pub memory_limit: usize,
-    pub time_limit: usize,
-}
-
-#[derive(Clone, Debug, TS)]
-#[ts(export)]
-pub enum ValidatorType {
-    TestLibChecker,
+#[sqlx(type_name = "validation_type", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum ValidationType {
+    TestlibChecker,
+    #[default]
     LiteralChecker,
+    Interactive,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, TS)]
@@ -307,7 +328,7 @@ mod tests {
 
     use crate::{
         consts::{CONTEST_ID_BITS, PROBLEM_ID_BITS},
-        problem::{ContestId, ProblemID, SubmissionID},
+        problem::{ContestId, ProblemID, SubmissionId},
     };
 
     #[test]
@@ -324,8 +345,12 @@ mod tests {
 
         let max_limit: u32 = ((1u64 << PROBLEM_ID_BITS as u64) - 1).try_into().unwrap();
         let problem_id = ProblemID(rng.gen_range(1..max_limit));
-        let contest_id = ContestId(rng.gen_range(1..(1 << CONTEST_ID_BITS)));
-        let id = SubmissionID::new(time, &problem_id, Some(&contest_id), &user_id);
+        let contest_id = ContestId(
+            rng.gen_range(1..(1u128 << CONTEST_ID_BITS))
+                .try_into()
+                .unwrap(),
+        );
+        let id = SubmissionId::new(time, &problem_id, Some(&contest_id), &user_id);
 
         assert_eq!(problem_id.as_u32(), id.get_problem_id().unwrap().as_u32());
         assert_eq!(contest_id.as_u32(), id.get_contest_id().unwrap().as_u32());
