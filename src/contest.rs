@@ -13,6 +13,7 @@ pub enum Language {
     Cpp11,
     Cpp17,
     Cpp14,
+    Cmp,
 }
 impl TryFrom<String> for Language {
     type Error = &'static str;
@@ -24,6 +25,7 @@ impl TryFrom<String> for Language {
             "cpp11" => Ok(Language::Cpp11),
             "cpp17" => Ok(Language::Cpp17),
             "java" => Ok(Language::Java),
+            "cmp" => Ok(Language::Cmp),
             _ => Err("Invalid option"),
         }
     }
@@ -37,6 +39,7 @@ impl std::fmt::Display for Language {
             Language::Cpp14 => "cpp14",
             Language::Cpp11 => "cpp11",
             Language::Cpp17 => "cpp17",
+            Language::Cmp => "cmp",
         };
         write!(f, "{}", lang_str)
     }

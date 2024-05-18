@@ -280,7 +280,8 @@ pub struct TestCaseInfo {
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default, TS)]
 pub struct TestCaseConfig {
-    pub test_cases: Vec<TestCaseInfo>,
+    pub test_cases: Vec<Uuid>,
+    pub problem_id: ProblemID,
 }
 
 // this for testing purposes
