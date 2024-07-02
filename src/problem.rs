@@ -275,12 +275,12 @@ pub struct TestCaseInfo {
     pub stdin_path: String,
     pub stdout_path: Option<String>,
     pub problem_id: ProblemID,
-    pub id: Uuid,
+    pub id: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default, TS)]
 pub struct TestCaseConfig {
-    pub test_cases: Vec<Uuid>,
+    pub test_cases: Vec<String>,
     pub problem_id: ProblemID,
 }
 
@@ -295,7 +295,7 @@ pub struct STestCase {
 #[ts(export)]
 pub struct TestCaseResult {
     pub status: Status,
-    pub id: Uuid,
+    pub id: String,
     #[serde(with = "external_struct")]
     #[ts(type = "{ stdout: any , stderr : any , status: any } | null")]
     pub output: Option<Output>,
