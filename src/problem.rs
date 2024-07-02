@@ -239,7 +239,7 @@ pub struct Problem {
     #[validate(range(min = 1, max = 10))] // time limit in seconds
     pub time_limit: u16,
     pub is_public: bool,
-    pub test_cases: Vec<Uuid>,
+    pub test_cases: Vec<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, TS)]
