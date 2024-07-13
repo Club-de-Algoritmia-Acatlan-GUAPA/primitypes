@@ -291,6 +291,13 @@ pub struct STestCase {
     pub id: Uuid,
 }
 
+// this for testing purposes
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default, TS)]
+pub struct TestCaseIdInfo {
+    pub input_id: String,
+    pub output_id: String,
+    pub test_case_id: String,
+}
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize, TS)]
 #[ts(export)]
 pub struct TestCaseResult {
