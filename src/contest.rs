@@ -1,8 +1,9 @@
+use chrono::serde::ts_milliseconds;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::problem::{ContestId, ProblemID, SubmissionId};
+use crate::problem::{ContestId, ProblemId, SubmissionId};
 
 #[derive(Clone, Debug, Serialize, Deserialize, TS, Hash, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -48,10 +49,55 @@ impl std::fmt::Display for Language {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
 pub struct Submission {
-    pub problem_id: ProblemID,
+    pub problem_id: ProblemId,
     pub user_id: Uuid,
     pub contest_id: Option<ContestId>,
     pub language: Language,
     pub code: Vec<u8>,
     pub id: SubmissionId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
+pub struct Contest {
+    pub id: ContestId,
+    pub author: Uuid,
+    pub body: ContestBody,
+    pub name: String,
+    #[serde(with = "ts_milliseconds")]
+    pub start_date: chrono::DateTime<chrono::Utc>,
+    #[serde(with = "ts_milliseconds")]
+    pub end_date: chrono::DateTime<chrono::Utc>,
+    pub contest_type: ContestType,
+    pub problems: Vec<ProblemId>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
+pub struct ContestBody {
+    pub information: String,
+    pub rules: String,
+    pub sponsor: String,
+}
+
+impl From<sqlx::types::JsonValue> for ContestBody {
+    fn from(value: sqlx::types::JsonValue) -> Self {
+        let value = value.as_object().unwrap();
+        Self {
+            information: value["information"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string(),
+            rules: value["rules"].as_str().unwrap_or_default().to_string(),
+            sponsor: value["sponsor"].as_str().unwrap_or_default().to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Hash, PartialEq, Eq, Deserialize, Serialize, TS, sqlx::Type)]
+#[ts(export)]
+#[sqlx(type_name = "contest_type", rename_all = "snake_case")]
+pub enum ContestType {
+    #[default]
+    ICPC,
 }

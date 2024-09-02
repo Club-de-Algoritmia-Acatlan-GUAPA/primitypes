@@ -7,7 +7,7 @@ use ts_rs::TS;
 
 use crate::{
     contest::Language,
-    problem::{ProblemID, SubmissionId},
+    problem::{ProblemId, SubmissionId},
     status::StatusPG,
     utils::empty_string_as_none,
 };
@@ -27,7 +27,7 @@ pub struct SubmitForm {
 #[serde(rename_all = "lowercase")]
 #[ts(export)]
 pub struct GetSubmissionsForm {
-    pub problem_id: ProblemID,
+    pub problem_id: ProblemId,
     pub from: usize,
     pub to: usize,
 }

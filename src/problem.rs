@@ -12,10 +12,7 @@ use crate::{
     consts::{
         CONTEST_ID_BITS, EMPTY_BITS, PROBLEM_ID_BITS, SUBMISSION_ID_BITS, TIMESTAMP_BITS,
         UUID_TIME_MID_BITS,
-    },
-    serde::external_struct,
-    status::Status,
-    utils::empty_string_as_none,
+    }, contest::ContestBody, serde::external_struct, status::Status, utils::empty_string_as_none
 };
 /// # Id concurso (32 bits):
 ///
@@ -37,6 +34,12 @@ impl From<&ContestId> for u128 {
     }
 }
 
+impl From<i32> for ContestId {
+    fn from(value: i32) -> Self {
+        ContestId(u32::try_from(value).unwrap())
+    }
+}
+
 impl From<ContestId> for u128 {
     fn from(value: ContestId) -> Self {
         value.0 as u128
@@ -44,18 +47,24 @@ impl From<ContestId> for u128 {
 }
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, TS)]
 #[serde(transparent)]
-pub struct ProblemID(pub u32);
-impl Eq for ProblemID {}
-impl From<&ProblemID> for u128 {
-    fn from(value: &ProblemID) -> Self {
+pub struct ProblemId(pub u32);
+impl Eq for ProblemId {}
+impl From<&ProblemId> for u128 {
+    fn from(value: &ProblemId) -> Self {
         value.0 as u128
     }
 }
-impl fmt::Display for ProblemID {
+impl fmt::Display for ProblemId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
+impl From<i32> for ProblemId {
+    fn from(value: i32) -> Self {
+        ProblemId(u32::try_from(value).unwrap())
+    }
+}
+
 
 #[derive(TS)]
 #[ts(export)]
@@ -64,7 +73,7 @@ pub enum ProblemType {
     Contest = 1,
 }
 
-impl ProblemID {
+impl ProblemId {
     pub fn new(id: u32) -> Self {
         //let mut base = match problem_type {
         //    ProblemType::Individual => 0,
@@ -137,7 +146,7 @@ impl SubmissionId {
 
     pub fn new(
         current_time: u64,
-        problem_id: &ProblemID,
+        problem_id: &ProblemId,
         _contest_id: Option<&ContestId>,
         user_id: &Uuid,
     ) -> Self {
@@ -185,10 +194,10 @@ impl SubmissionId {
         base
     }
 
-    pub fn get_problem_id(&self) -> Result<ProblemID> {
+    pub fn get_problem_id(&self) -> Result<ProblemId> {
         let mask_of_ones = (1 << PROBLEM_ID_BITS) - 1;
         let mask_of_shifted_bits = self.0 >> (UUID_TIME_MID_BITS + EMPTY_BITS);
-        Ok(ProblemID((mask_of_ones & mask_of_shifted_bits).try_into()?))
+        Ok(ProblemId((mask_of_ones & mask_of_shifted_bits).try_into()?))
     }
 
     pub fn get_problem_id_as_bit_vec(&self) -> BitVec {
@@ -223,12 +232,20 @@ pub struct ProblemBody {
     pub output: String,
     pub problem: String,
     pub note: Option<String>,
+    pub examples: Vec<ProblemExample>,
+}
+
+#[derive(Debug, Default, Serialize, Clone, Deserialize, TS)]
+#[ts(export)]
+pub struct ProblemExample {
+    pub input: String,
+    pub output: String,
 }
 
 #[derive(Debug, Clone, TS, Validate, Default)]
 #[ts(export)]
 pub struct Problem {
-    pub id: ProblemID,
+    pub id: ProblemId,
     pub created_at: chrono::DateTime<Utc>,
     pub submitted_by: Uuid,
     pub body: ProblemBody,
@@ -245,6 +262,15 @@ pub struct Problem {
 #[derive(Deserialize, Serialize, Debug, TS)]
 #[ts(export)]
 pub struct ProblemGetResponse {
+    pub problem_id: u32,
+    pub body: ProblemBody,
+    pub memory_limit: u32,
+    pub time_limit: u32,
+}
+
+#[derive(Deserialize, Serialize, Debug, TS)]
+#[ts(export)]
+pub struct ProblemsGetResponse {
     pub problem_id: u32,
     pub body: ProblemBody,
 }
@@ -274,14 +300,14 @@ pub struct Checker {
 pub struct TestCaseInfo {
     pub stdin_path: String,
     pub stdout_path: Option<String>,
-    pub problem_id: ProblemID,
+    pub problem_id: ProblemId,
     pub id: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default, TS)]
 pub struct TestCaseConfig {
     pub test_cases: Vec<String>,
-    pub problem_id: ProblemID,
+    pub problem_id: ProblemId,
 }
 
 // this for testing purposes
@@ -336,7 +362,7 @@ mod tests {
 
     use crate::{
         consts::{CONTEST_ID_BITS, PROBLEM_ID_BITS},
-        problem::{ContestId, ProblemID, SubmissionId},
+        problem::{ContestId, ProblemId, SubmissionId},
     };
 
     #[test]
@@ -352,7 +378,7 @@ mod tests {
         let mut rng = rand::thread_rng();
 
         let max_limit: u32 = ((1u64 << PROBLEM_ID_BITS as u64) - 1).try_into().unwrap();
-        let problem_id = ProblemID(rng.gen_range(1..max_limit));
+        let problem_id = ProblemId(rng.gen_range(1..max_limit));
         let contest_id = ContestId(
             rng.gen_range(1..(1u128 << CONTEST_ID_BITS))
                 .try_into()

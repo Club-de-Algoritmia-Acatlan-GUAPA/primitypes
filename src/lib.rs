@@ -6,5 +6,6 @@ pub mod serde;
 pub mod status;
 pub mod submit;
 pub mod utils;
+pub mod relations;
 pub use uuid::Uuid;
 
