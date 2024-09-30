@@ -12,7 +12,10 @@ use crate::{
     consts::{
         CONTEST_ID_BITS, EMPTY_BITS, PROBLEM_ID_BITS, SUBMISSION_ID_BITS, TIMESTAMP_BITS,
         UUID_TIME_MID_BITS,
-    }, contest::ContestBody, serde::external_struct, status::Status, utils::empty_string_as_none
+    },
+    serde::external_struct,
+    status::Status,
+    utils::empty_string_as_none,
 };
 /// # Id concurso (32 bits):
 ///
@@ -40,6 +43,12 @@ impl From<i32> for ContestId {
     }
 }
 
+impl From<u32> for ContestId {
+    fn from(value: u32) -> Self {
+        ContestId(value)
+    }
+}
+
 impl From<ContestId> for u128 {
     fn from(value: ContestId) -> Self {
         value.0 as u128
@@ -64,7 +73,6 @@ impl From<i32> for ProblemId {
         ProblemId(u32::try_from(value).unwrap())
     }
 }
-
 
 #[derive(TS)]
 #[ts(export)]
@@ -231,6 +239,7 @@ pub struct ProblemBody {
     pub input: String,
     pub output: String,
     pub problem: String,
+    #[serde(deserialize_with = "empty_string_as_none")]
     pub note: Option<String>,
     pub examples: Vec<ProblemExample>,
 }
@@ -248,6 +257,20 @@ pub struct Problem {
     pub id: ProblemId,
     pub created_at: chrono::DateTime<Utc>,
     pub submitted_by: Uuid,
+    pub body: ProblemBody,
+    pub checker: Option<Checker>,
+    pub validation: ValidationType,
+    #[validate(range(min = 256, max = 512))] // memory in mb
+    pub memory_limit: u16,
+    #[validate(range(min = 1, max = 10))] // time limit in seconds
+    pub time_limit: u16,
+    pub is_public: bool,
+    pub test_cases: Vec<String>,
+}
+
+#[derive(Debug, Clone, TS, Validate, Default)]
+#[ts(export)]
+pub struct EditablePartsOfProblem {
     pub body: ProblemBody,
     pub checker: Option<Checker>,
     pub validation: ValidationType,
@@ -343,6 +366,16 @@ pub enum ValidationType {
     #[default]
     LiteralChecker,
     Interactive,
+}
+
+impl std::fmt::Display for ValidationType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValidationType::TestlibChecker => write!(f, "testlib_checker"),
+            ValidationType::LiteralChecker => write!(f, "literal_checker"),
+            ValidationType::Interactive => write!(f, "interactive"),
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, TS)]
