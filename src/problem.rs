@@ -265,7 +265,7 @@ pub struct Problem {
     #[validate(range(min = 1, max = 10))] // time limit in seconds
     pub time_limit: u16,
     pub is_public: bool,
-    pub test_cases: Vec<String>,
+    pub test_cases: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone, TS, Validate, Default)]
@@ -279,7 +279,7 @@ pub struct EditablePartsOfProblem {
     #[validate(range(min = 1, max = 10))] // time limit in seconds
     pub time_limit: u16,
     pub is_public: bool,
-    pub test_cases: Vec<String>,
+    pub test_cases: Vec<Uuid>,
 }
 
 #[derive(Deserialize, Serialize, Debug, TS)]
@@ -322,14 +322,14 @@ pub struct Checker {
 #[ts(export)]
 pub struct TestCaseInfo {
     pub stdin_path: String,
-    pub stdout_path: Option<String>,
+    pub stdout_path: String,
     pub problem_id: ProblemId,
-    pub id: String,
+    pub id: Uuid,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default, TS)]
 pub struct TestCaseConfig {
-    pub test_cases: Vec<String>,
+    pub test_cases: Vec<Uuid>,
     pub problem_id: ProblemId,
 }
 
@@ -351,7 +351,7 @@ pub struct TestCaseIdInfo {
 #[ts(export)]
 pub struct TestCaseResult {
     pub status: Status,
-    pub id: String,
+    pub id: Uuid,
     #[serde(with = "external_struct")]
     #[ts(type = "{ stdout: any , stderr : any , status: any } | null")]
     pub output: Option<Output>,
