@@ -1,4 +1,4 @@
-use std::{fmt, process::Output};
+use std::{fmt, process::Output, time::Duration};
 
 use anyhow::{anyhow, Result};
 use bit_vec::BitVec;
@@ -347,14 +347,13 @@ pub struct TestCaseIdInfo {
     pub output_id: String,
     pub test_case_id: String,
 }
-#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize, TS)]
-#[ts(export)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct TestCaseResult {
     pub status: Status,
     pub id: Uuid,
     #[serde(with = "external_struct")]
-    #[ts(type = "{ stdout: any , stderr : any , status: any } | null")]
     pub output: Option<Output>,
+    pub duration: Duration,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, TS, sqlx::Type)]
@@ -378,13 +377,11 @@ impl std::fmt::Display for ValidationType {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, TS)]
-#[ts(export)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 pub struct ProblemExecutorResult {
     pub overall_result: Status,
     pub test_cases_results: Vec<TestCaseResult>,
     #[serde(with = "external_struct")]
-    #[ts(type = "{ stdout: any , stderr : any , status: any } | null")]
     pub prepare_output: Option<Output>,
 }
 #[cfg(test)]
