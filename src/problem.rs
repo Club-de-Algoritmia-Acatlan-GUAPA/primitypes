@@ -54,6 +54,12 @@ impl From<ContestId> for u128 {
         value.0 as u128
     }
 }
+impl TryFrom<String> for ContestId {
+    type Error = anyhow::Error;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(ContestId(value.parse::<u32>()?))
+    }
+}
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, TS)]
 #[serde(transparent)]
 pub struct ProblemId(pub u32);
@@ -71,6 +77,13 @@ impl fmt::Display for ProblemId {
 impl From<i32> for ProblemId {
     fn from(value: i32) -> Self {
         ProblemId(u32::try_from(value).unwrap())
+    }
+}
+
+impl TryFrom<String> for ProblemId {
+    type Error = anyhow::Error;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(ProblemId(value.parse::<u32>()?))
     }
 }
 
