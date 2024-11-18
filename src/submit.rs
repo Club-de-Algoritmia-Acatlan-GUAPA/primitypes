@@ -28,6 +28,7 @@ pub struct SubmitForm {
 #[ts(export)]
 pub struct GetSubmissionsForm {
     pub problem_id: ProblemId,
+    pub contest_id: Option<u32>,
     pub from: usize,
     pub to: usize,
 }
@@ -38,6 +39,7 @@ pub struct GetSubmissionsForm {
 pub struct GetSubmissionId {
     #[serde(deserialize_with = "string_into_submission_id")]
     pub submission_id: SubmissionId,
+    pub contest_id: Option<u32>,
 }
 
 fn string_into_submission_id<'de, D>(de: D) -> Result<SubmissionId, D::Error>
