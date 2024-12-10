@@ -54,7 +54,29 @@ pub struct Submission {
     pub contest_id: Option<ContestId>,
     pub language: Language,
     pub code: Vec<u8>,
+    #[serde(
+        deserialize_with = "deserialize_string_to_submission_id",
+        serialize_with = "serialize_submission_id_as_string"
+    )]
     pub id: SubmissionId,
+}
+fn serialize_submission_id_as_string<S>(
+    submission_id: &SubmissionId,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&submission_id.as_u128().to_string())
+}
+
+fn deserialize_string_to_submission_id<'de, D>(deserializer: D) -> Result<SubmissionId, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    let num: u128 = s.parse().map_err(serde::de::Error::custom)?;
+    Ok(SubmissionId::from_u128(num))
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

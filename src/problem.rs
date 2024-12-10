@@ -394,6 +394,7 @@ impl std::fmt::Display for ValidationType {
 pub struct ProblemExecutorResult {
     pub overall_result: Status,
     pub test_cases_results: Vec<TestCaseResult>,
+    pub total_duration: Duration,
     #[serde(with = "external_struct")]
     pub prepare_output: Option<Output>,
 }
