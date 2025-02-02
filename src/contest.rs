@@ -94,6 +94,24 @@ pub struct Contest {
     pub problems: Vec<ProblemId>,
 }
 
+
+pub enum ContestState {
+    NotStarted,
+    Running,
+    Ended,
+}
+impl Contest {
+    pub fn status(&self) -> ContestState {
+        let now = chrono::Utc::now();
+        if now < self.start_date {
+            ContestState::NotStarted
+        } else if now < self.end_date {
+            ContestState::Running
+        } else {
+            ContestState::Ended
+        }
+    }
+}
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
 pub struct ContestBody {

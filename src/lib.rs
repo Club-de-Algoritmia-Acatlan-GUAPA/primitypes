@@ -7,5 +7,6 @@ pub mod status;
 pub mod submit;
 pub mod utils;
 pub mod relations;
+pub mod user;
 pub use uuid::Uuid;
 
