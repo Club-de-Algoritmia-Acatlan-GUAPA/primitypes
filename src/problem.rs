@@ -302,6 +302,8 @@ pub struct ProblemGetResponse {
     pub body: ProblemBody,
     pub memory_limit: u32,
     pub time_limit: u32,
+    pub is_public: bool,
+    pub author: Uuid
 }
 
 #[derive(Deserialize, Serialize, Debug, TS)]

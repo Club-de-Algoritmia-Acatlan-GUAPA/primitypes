@@ -5,7 +5,7 @@ pub const USERNAME_FORBIDDEN_CHARACTERS: [char; 10] =
 
 pub const MAX_SUBMISSION_FILE_SIZE_IN_BYTES: usize = 71680; // 70kb
 pub const MAX_SUBMISSION_FILE_SIZE_IN_KB: usize = 70;
-pub const MAX_TESCASE_FILE_SIZE_IN_BYTES: usize = 4194304; // 4MB 
+pub const MAX_TESCASE_FILE_SIZE_IN_BYTES: usize = 1048576; // 10MB
 pub const SUBMISSION_ID_BITS: u128 = 128;
 pub const TIMESTAMP_BITS: u128 = 41;
 pub const CONTEST_ID_BITS: u128 = 32;
