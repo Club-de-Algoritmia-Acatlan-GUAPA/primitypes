@@ -41,9 +41,26 @@ impl fmt::Display for Status {
             Status::TimeLimitExceeded => write!(f, "Time Limit Exceeded"),
             Status::PartialPoints => write!(f, "Partial Execution"),
             Status::RuntimeError => write!(f, "Runtime Error"),
-            Status::UnknownError(e) => write!(f, "UnknownError:({})", e),
+            Status::UnknownError(e) => write!(f, "Unknown Error:({})", e),
             Status::CompilationError => write!(f, "Compilation Error"),
             Status::Pending => write!(f, "Pending"),
+        }
+    }
+}
+
+impl TryFrom<String> for Status {
+    type Error = std::convert::Infallible;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "Accepted" | "accepted" => Ok(Status::Accepted),
+            "Wrong Answer" | "wrong_answer" => Ok(Status::WrongAnswer),
+            "Time Limit Exceeded" | "time_limit_exceeded" => Ok(Status::TimeLimitExceeded),
+            "Runtime Error" | "runtime_error" => Ok(Status::RuntimeError),
+            "Pending" | "pending" => Ok(Status::Pending),
+            "Compilation Error" | "compilation_error" => Ok(Status::CompilationError),
+            "Unknown Error" | "unknown_error" => Ok(Status::UnknownError("".to_string())),
+            _ => Ok(Status::UnknownError(value)),
         }
     }
 }
