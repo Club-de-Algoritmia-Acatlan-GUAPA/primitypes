@@ -15,6 +15,7 @@ pub enum Language {
     Cpp17,
     Cpp14,
     Cmp,
+    C
 }
 impl TryFrom<String> for Language {
     type Error = &'static str;
@@ -27,6 +28,7 @@ impl TryFrom<String> for Language {
             "cpp17" => Ok(Language::Cpp17),
             "java" => Ok(Language::Java),
             "cmp" => Ok(Language::Cmp),
+            "c" => Ok(Language::C),
             _ => Err("Invalid option"),
         }
     }
@@ -41,6 +43,7 @@ impl std::fmt::Display for Language {
             Language::Cpp11 => "cpp11",
             Language::Cpp17 => "cpp17",
             Language::Cmp => "cmp",
+            Language::C => "c",
         };
         write!(f, "{}", lang_str)
     }
@@ -92,6 +95,8 @@ pub struct Contest {
     pub end_date: chrono::DateTime<chrono::Utc>,
     pub contest_type: ContestType,
     pub problems: Vec<ProblemId>,
+    pub is_frozen: bool,
+    pub frozen_time: i32
 }
 
 
